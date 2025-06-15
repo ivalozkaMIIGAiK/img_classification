@@ -5,7 +5,7 @@ opencv-python-headless
 pillow
 scikit-learn
 joblib
-tensorflow
+tensorflow==2.19.0
 streamlit
 streamlit-drawable-canvas
 requests
