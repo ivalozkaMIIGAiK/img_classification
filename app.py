@@ -10,7 +10,7 @@ st.title("🐾 Animal Classifier")
 st.subheader("Загрузите изображение животного для классификации")
 
 # API endpoint (замени на своё при развертывании)
-API_URL = "https://your-api-url.onrender.com/predict/"
+API_URL = "https://img-classification-vybw.onrender.com/predict/"
 
 # Форма для загрузки изображения
 uploaded_file = st.file_uploader("Загрузите изображение", type=["jpg", "jpeg", "png"])
