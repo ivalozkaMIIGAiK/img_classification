@@ -7,13 +7,13 @@ import matplotlib.pyplot as plt
 from streamlit_drawable_canvas import st_canvas
 
 # URL до API
-API_URL = "https://chicken-cow-horse-sheep-classification.onrender.com/predict/"
+API_URL = "https://img-classification-7zj5.onrender.com/predict/"
 
 # Имена классов
 CLASS_NAMES = {
-    "0": "chicken",
-    "1": "cow",
-    "2": "horse",
+    "0": "cats",
+    "1": "dogs",
+    "2": "pandas",
     "3": "sheep"
 }
 
