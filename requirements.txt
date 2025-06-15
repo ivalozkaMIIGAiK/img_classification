@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+numpy
+opencv-python-headless
+pillow
+scikit-learn
+joblib
+tensorflow
+streamlit
+streamlit-drawable-canvas
+requests
+matplotlib
