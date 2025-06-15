@@ -1,45 +1,85 @@
 import streamlit as st
-import requests
-from PIL import Image
 import numpy as np
-import io
+from PIL import Image
+import requests
+from io import BytesIO
 import matplotlib.pyplot as plt
+from streamlit_drawable_canvas import st_canvas
 
-# Заголовок
-st.title("🐾 Animal Classifier")
-st.subheader("Загрузите изображение животного для классификации")
+# URL до API
+API_URL = "https://chicken-cow-horse-sheep-classification.onrender.com/predict/"
 
-# API endpoint (замени на своё при развертывании)
-API_URL = "https://img-classification-vybw.onrender.com/predict/"
+# Имена классов
+CLASS_NAMES = {
+    "0": "chicken",
+    "1": "cow",
+    "2": "horse",
+    "3": "sheep"
+}
 
-# Форма для загрузки изображения
-uploaded_file = st.file_uploader("Загрузите изображение", type=["jpg", "jpeg", "png"])
+st.title("🐔🐄🐎🐑 Классификация изображений животных")
 
-if uploaded_file:
-    # Отображение изображения
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Загруженное изображение", use_column_width=True)
+tab = st.radio("Выберите режим", ["📷 Загрузить изображение", "✏️ Нарисовать изображение"])
 
-    # Кнопка классификации
+image = None
+
+if tab == "📷 Загрузить изображение":
+    uploaded_file = st.file_uploader("Загрузите изображение", type=["jpg", "jpeg", "png"])
+    if uploaded_file:
+        image = Image.open(uploaded_file).convert("RGB")
+
+elif tab == "✏️ Нарисовать изображение":
+    st.write("Нарисуйте животное белым цветом на черном фоне:")
+    canvas_result = st_canvas(
+        fill_color="black",
+        stroke_width=10,
+        stroke_color="white",
+        background_color="black",
+        width=256,
+        height=256,
+        drawing_mode="freedraw",
+        key="canvas_draw",
+        update_streamlit=True
+    )
+
+    if canvas_result.image_data is not None:
+        image = Image.fromarray((canvas_result.image_data).astype("uint8")).convert("RGB")
+
+# Отображение изображения
+if image:
+    st.image(image, caption="Входное изображение", use_container_width=True)
+
     if st.button("Классифицировать"):
-        with st.spinner("Анализ изображения..."):
-            # Отправка POST-запроса
-            files = {"file": uploaded_file.getvalue()}
-            try:
-                response = requests.post(API_URL, files=files)
-                result = response.json()
+        # Предобработка изображения
+        img_resized = image.resize((64, 64))
+        buffered = BytesIO()
+        img_resized.save(buffered, format="PNG")
+        img_bytes = buffered.getvalue()
 
-                # Отображение результата
-                st.success(f"✅ Предсказанный класс: **{result['predicted_class']}**")
+        # Отправка на API
+        files = {"file": ("image.png", img_bytes, "image/png")}
+        response = requests.post(API_URL, files=files)
 
-                # Визуализация вероятностей
-                st.subheader("Распределение вероятностей:")
-                labels = list(result["probabilities"].keys())
-                probs = list(result["probabilities"].values())
+        if response.status_code == 200:
+            result = response.json()
 
-                fig, ax = plt.subplots()
-                ax.barh(labels, probs, color="skyblue")
-                ax.set_xlim([0, 1])
-                st.pyplot(fig)
-            except Exception as e:
-                st.error(f"Ошибка при обращении к API: {e}")
+            # Предсказанный класс
+            class_id = result.get("predicted_class", "unknown")
+            class_name = CLASS_NAMES.get(class_id, f"Unknown class: {class_id}")
+
+            st.subheader("✅ Предсказанный класс:")
+            st.write(class_name)
+
+            # Вероятности
+            raw_probs = result.get("probabilities", {})
+            readable_probs = {CLASS_NAMES.get(k, k): v for k, v in raw_probs.items()}
+
+            st.subheader("📊 Распределение вероятностей:")
+            fig, ax = plt.subplots()
+            ax.bar(readable_probs.keys(), readable_probs.values(), color="skyblue")
+            ax.set_ylabel("Вероятность")
+            ax.set_ylim([0, 1])
+            st.pyplot(fig)
+        else:
+            st.error("Ошибка при обращении к API:")
+            st.text(response.text)
