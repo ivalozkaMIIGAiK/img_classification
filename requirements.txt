@@ -10,4 +10,4 @@ streamlit
 streamlit-drawable-canvas
 requests
 matplotlib
-
+python-multipart
